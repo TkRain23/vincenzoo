@@ -20,62 +20,69 @@ const animals = [
     
 ]
 
+const zoos = [
+    {
+        name: 'vincenzoos',
+        zooId: '1',
+        animals: animals
+    }
+]
+
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}))
 app.use(express.urlencoded({extended: true}));
 
 
-app.get('/zoo/animals', function(req, res) {
-    res.status(200).send(animals);
+app.get('/zoos/:zooId/animals', function(req, res) {
+    res.status(200).send(zoos);
 })
 
-app.get('/zoo/animals/:animalId', function(req, res) {
+app.get('/zoos/:zooId/animals/:animalId', function(req, res) {
 
-    for(animal in animals){
-        if (animals[animal].animalId == req.params.animalId){
-           return res.status(200).json(animals[animal]); 
+    const zoo = zoos.filter(zoo => zoo.zooId == req.params.zooId)[0];
+    if(zoo){
+        console.log(zoo)
+        const animal = zoo["animals"].filter(animal => animal.animalId == req.params.animalId)[0];
+        
+        if(animal) {
+            return res.status(200).json(animal);
+        } else {
+            return res.status(404).json({err: "Couldn't find animal"})
         }
+    }else{
+        return res.status(404).json({err: "Couldn't find zoo"})
     }
-
-    return res.status(404).json({err: "Animal could not be found"});
 });
 
-app.post('/zoo/animals', function(req, res) {
-    const animal = req.body;
-    let animalId = animals.length + 1
+app.post('/zoos/:zooId/animals', function(req, res) {
+    const zoo = zoos.filter(zoo => zoo.zooId == req.params.zooId)[0];
 
-    animals.push(animal);
-
-    return res.status(200).json(animal);
-
+    if(zoo) {
+        const animal = req.body;
+        let animalId = zoo.animals.length + 1;
+        zoo.animals.push(animal)
+        return res.status(200).json(animal);
+    }else{
+        return res.status(404).json({err: "Zoo not found"})
+    }
 })
 
-app.put('/zoo/animals/:animalId', function(req, res) {
-    const updatedAnimal = req.body;
+app.put('/zoos/:zooId/animals/:animalId', function(req, res) {
+    const zoo = zoos.filter(zoo => zoo.zooId == req.params.zooId)[0];
 
-    for(animal in animals) {
-        let currentAnimal = animals[animal];
-        if (currentAnimal.animalId == updatedAnimal.animalId) {
-            animals[animal] = updatedAnimal;
-            return res.status(200).json(updatedAnimal)
+    if(zoo) {
+        const index = zoo.animals.indexOf(req.params.animalId) 
+        if(animal !== -1) {
+            const updatedAnimal = req.body;
+            zoo.animals[index] = udpatedAnimal;    
+            return res.status(200).json(updatedAnimal);    
+        }else {
+            return res.status(200).json("Couldn't find animal to update")
         }
+    }else {
+        return res.status(404).json({err: "Zoo could not be found"})
     }
-    
-    return res.status(404).json({err: "Animal could not be found"})
 });
-
-app.delete('/zoo/animals/:animalId', function(req, res) {
-    for(animal in animals) {
-        let currentAnimal = animals[animal];
-        if(currentAnimal.animalId == req.params.animalId) {
-            delete animals[animal];
-            return res.status(200).json(currentAnimal)
-        }
-    }
-
-    return res.status(404).json({err: "Animal could not be found"})
-})
-
 
 app.listen(3000, function() {
     console.log('App is listening on port 3000')
